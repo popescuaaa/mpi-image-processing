@@ -10,6 +10,8 @@
 
     // TODO: defensive programming over all parameters
     // TODO: remove this comment and add more esteic ones
+    // TODO: line length is huge
+    // TODO: remove duplicated code or think for alternative solutions
 **/
 
 #ifndef IMAGE_PROCESSOR
@@ -49,6 +51,7 @@ int image_type(char *image_file_name)
 
 PGMImage *read_PGM_image(char *image_file_name) 
 {
+    int line, column;
     PGMImage *image_structure = (PGMImage *) malloc(1 * sizeof(PGMImage));
 
     FILE *image = fopen(image_file_name, "rb");
@@ -101,6 +104,22 @@ PGMImage *read_PGM_image(char *image_file_name)
     
     image_structure -> image_content = image_content;
 
+    unsigned char **image_matrix = (unsigned char **) malloc(image_structure -> height * sizeof(unsigned char *));
+    for (line = 0; line < image_structure -> height; ++line) 
+    {
+        image_matrix[line] = (unsigned char *) malloc(image_structure -> width * sizeof(unsigned char));
+    }
+
+    for (line = 0; line < image_structure -> height; ++line) 
+    {
+        for (column = 0; column < image_structure -> width; ++column) 
+        {
+            image_matrix[line][column] = image_content[line + column];
+        }
+    }
+    
+    image_structure -> image_matrix = image_matrix;
+
     fclose(image);
     return image_structure;
 }
@@ -108,6 +127,7 @@ PGMImage *read_PGM_image(char *image_file_name)
 
 PNMImage *read_PNM_image(char *image_file_name) 
 {
+    int line, column;
     PNMImage *image_structure = (PNMImage *) malloc(1 * sizeof(PNMImage));
 
     FILE *image = fopen(image_file_name, "rb");
@@ -158,6 +178,22 @@ PNMImage *read_PNM_image(char *image_file_name)
     fread(rgb_content, sizeof(Pixel), image_structure -> width * image_structure ->height, image);
     
     image_structure -> rgb_content = rgb_content;
+
+    Pixel **rgb_image_matrix= (Pixel **) malloc(image_structure -> height * sizeof(Pixel *));
+    for (line = 0; line < image_structure -> height; ++line) 
+    {
+        rgb_image_matrix[line] = (Pixel *) malloc(image_structure -> width * sizeof(Pixel));
+    }
+
+    for (line = 0; line < image_structure -> height; ++line) 
+    {
+        for (column = 0; column < image_structure -> width; ++column) 
+        {
+            rgb_image_matrix[line][column] = rgb_content[line + column];
+        }
+    }
+    
+    image_structure -> rgb_image_matrix = rgb_image_matrix;
 
     fclose(image);
     return image_structure;

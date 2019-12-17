@@ -22,6 +22,7 @@ typedef struct
     int max_val;
     unsigned char *image_type;
     unsigned char *image_content;
+    unsigned char **image_matrix;
 } PGMImage;
 
 
@@ -45,6 +46,7 @@ typedef struct
     int max_val;
     unsigned char *image_type;
     Pixel *rgb_content;
+    Pixel **rgb_image_matrix;
 } PNMImage;
 
 
