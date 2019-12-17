@@ -46,43 +46,44 @@ typedef struct{
     fread(image_type, 2, sizeof(char), image);
     image_structure -> image_type = image_type;
 
-    char comment_line[45];
-    fread(comment_line, sizeof(comment_line) + 1, sizeof(char), image);
+    unsigned char comment_line[45];
+    fread(comment_line, sizeof(unsigned char), sizeof(comment_line) + 1, image);
     
-    char width[5], height[5], max_val[5];// cu /0
-    char runner;
+    unsigned char width[5], height[5], max_val[5];
+    unsigned char runner;
 
-    fread(&runner, 1, sizeof(char), image); width[0] = runner;
-    fread(&runner, 1, sizeof(char), image); width[1] = runner;
-    fread(&runner, 1, sizeof(char), image); width[2] = runner;
-    fread(&runner, 1, sizeof(char), image); width[3] = runner;
-    fread(&runner, 1, sizeof(char), image); width[4] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); width[0] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); width[1] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); width[2] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); width[3] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); width[4] = runner;
    
     image_structure -> width = atoi(width);
     
-    fread(&runner, 1, sizeof(char), image); 
+    fread(&runner, sizeof(unsigned char), 1, image); 
 
-    fread(&runner, 1, sizeof(char), image); height[0] = runner;
-    fread(&runner, 1, sizeof(char), image); height[1] = runner;
-    fread(&runner, 1, sizeof(char), image); height[2] = runner;
-    fread(&runner, 1, sizeof(char), image); height[3] = runner;
-    fread(&runner, 1, sizeof(char), image); height[4] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); height[0] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); height[1] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); height[2] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); height[3] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); height[4] = runner;
    
     image_structure -> height = atoi(height);
     
 
-    fread(&runner, 1, sizeof(char), image); max_val[0] = runner;
-    fread(&runner, 1, sizeof(char), image); max_val[1] = runner;
-    fread(&runner, 1, sizeof(char), image); max_val[2] = runner;
-    fread(&runner, 1, sizeof(char), image); max_val[3] = runner;
-    fread(&runner, 1, sizeof(char), image); max_val[4] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); max_val[0] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); max_val[1] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); max_val[2] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); max_val[3] = runner;
+    fread(&runner, sizeof(unsigned char), 1, image); max_val[4] = runner;
 
     image_structure -> max_val = atoi(max_val);
 
-    char *image_content = (char *) malloc((image_structure -> width * image_structure -> height) * sizeof(char));
-    fread(image_content, sizeof(image_content) + 1, sizeof(char), image);
+    unsigned char *image_content = (unsigned char *) malloc((image_structure -> width * image_structure -> height) * sizeof(unsigned char));
+    fread(image_content, sizeof(unsigned char), image_structure -> width * image_structure -> height, image);
     
     image_structure -> image_content = image_content;
+
     fclose(image);
     return image_structure;
 }
