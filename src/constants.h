@@ -8,5 +8,7 @@
 #define WIDTH_DEFAULT_LENGTH 5
 #define HEIGHT_DEFAULT_LENGHT 5
 #define MAX_VAL_DEFAULT_LENGHT 5
-
+#define PGM_TYPE 5
+#define PNM_TYPE 6
+#define DEFAULT_RETURN_TYPE 0
 #endif

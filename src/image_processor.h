@@ -21,9 +21,11 @@
 #include "constants.h"
 #include "types.h"
 
+// TODO: handle another fomats with specific error
 
- PGMImage *read_PGM_image(char *image_file_name) 
- {
+
+PGMImage *read_PGM_image(char *image_file_name) 
+{
     PGMImage *image_structure = (PGMImage *) malloc(1 * sizeof(PGMImage));
 
     FILE *image = fopen(image_file_name, "rb");
@@ -82,7 +84,7 @@
 
 
 PNMImage *read_PNM_image(char *image_file_name) 
- {
+{
     PNMImage *image_structure = (PNMImage *) malloc(1 * sizeof(PNMImage));
 
     FILE *image = fopen(image_file_name, "rb");
@@ -121,7 +123,6 @@ PNMImage *read_PNM_image(char *image_file_name)
    
     image_structure -> height = atoi(height);
     
-
     fread(&runner, sizeof(unsigned char), 1, image); max_val[0] = runner;
     fread(&runner, sizeof(unsigned char), 1, image); max_val[1] = runner;
     fread(&runner, sizeof(unsigned char), 1, image); max_val[2] = runner;
@@ -130,10 +131,10 @@ PNMImage *read_PNM_image(char *image_file_name)
 
     image_structure -> max_val = atoi(max_val);
 
-    unsigned char *image_content = (unsigned char *) malloc((image_structure -> width * image_structure -> height) * sizeof(unsigned char));
-    fread(image_content, sizeof(unsigned char), image_structure -> width * image_structure -> height, image);
+    Pixel *rgb_content = (Pixel *) malloc(image_structure -> width * image_structure -> height * sizeof(Pixel));
+    fread(rgb_content, sizeof(Pixel), image_structure -> width * image_structure ->height, image);
     
-    image_structure -> image_content = image_content;
+    image_structure -> rgb_content = rgb_content;
 
     fclose(image);
     return image_structure;

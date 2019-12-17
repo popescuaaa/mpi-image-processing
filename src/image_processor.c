@@ -5,8 +5,14 @@
 
 int main(int argc, char const *argv[])
 {
-    char file_name[40] = "../PGM/darth-vader.pgm";
-    PGMImage *image = read_PGM_image(file_name);
+    char file_name[40] = "../PNM/baby-yoda.pnm";
+	int type = image_type(file_name);
+	PNMImage *image;
+	if(type == PNM_TYPE)
+	{
+		image = read_PNM_image(file_name);
+	}
+    
  	
     #ifdef  DEBUG
 		FILE *out = fopen("out.pgm", "wb");
@@ -23,6 +29,7 @@ int main(int argc, char const *argv[])
 		fclose(out);
     #endif
 
+	printf("%d\n", image -> width);
     free(image);
     return 0;
 }
