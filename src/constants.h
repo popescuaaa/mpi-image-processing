@@ -14,4 +14,6 @@
 #define PGM_TYPE 5
 #define PNM_TYPE 6
 #define DEFAULT_RETURN_TYPE 0
+#define FILTER_WIDTH 3
+#define FILTER_HEIGHT 3
 #endif
