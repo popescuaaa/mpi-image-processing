@@ -1,6 +1,12 @@
 #ifndef CONSTANTS
 #define CONSTANTS
 
-#define error_message "The file can't be opend!"
+#define FILE_ERROR_MESSAGE "The file can't be opend!"
+#define RUNNER_DEFAUT_VALUE 1
+#define COMMENT_LINE_FIXED_LENGTH 45
+#define IMAGE_TYPE_SIZE 2
+#define WIDTH_DEFAULT_LENGTH 5
+#define HEIGHT_DEFAULT_LENGHT 5
+#define MAX_VAL_DEFAULT_LENGHT 5
 
 #endif
