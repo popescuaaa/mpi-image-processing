@@ -21,8 +21,31 @@
 #include "constants.h"
 #include "types.h"
 
-// TODO: handle another fomats with specific error
+int image_type(char *image_file_name) 
+{
+    char PGM_type[] = ".pgm";
+    char PNM_type[] = ".pnm";
 
+    char* is_PGM = strstr(image_file_name, PGM_type);
+    char* is_PNM = strstr(image_file_name, PNM_type);
+
+    if (is_PNM != NULL)
+    {
+        printf("%s\n", PNM_FORMAT_SIGNAL);
+        return PNM_TYPE;
+    }
+    else if (is_PGM != NULL)
+    {
+        printf("%s\n", PGM_FORMAT_SIGNAL);
+        return PGM_TYPE;
+    }
+    else if (is_PNM == NULL && is_PGM == NULL) 
+    {
+        printf("%s\n", SUPPORTED_FORMATS_ERROR);
+    }
+    
+    return DEFAULT_RETURN_TYPE;
+}
 
 PGMImage *read_PGM_image(char *image_file_name) 
 {
