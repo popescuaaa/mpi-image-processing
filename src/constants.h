@@ -5,6 +5,8 @@
 #define PNM_FORMAT_SIGNAL "The input image is in PNM format"
 #define PGM_FORMAT_SIGNAL "The input image is in PGM format"
 #define SUPPORTED_FORMATS_ERROR "None of the supported formats"
+#define WRITING_PGM_IMAGE 	"Writing PGM image to file..."
+#define WRITING_PNM_IMAGE 	"Writing PNM image to file..."
 #define RUNNER_DEFAUT_VALUE 1
 #define COMMENT_LINE_FIXED_LENGTH 45
 #define IMAGE_TYPE_SIZE 2

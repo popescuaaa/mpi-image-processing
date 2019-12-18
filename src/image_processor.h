@@ -213,4 +213,30 @@ PNMImage *read_PNM_image(char *image_file_name)
     return image_structure;
 }
 
+void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
+{
+    
+}
+
+void write_PNM_image(PNMImage *pnm_image, char *output_file_name)
+{
+
+}
+
+void write_image(PGMImage *pgm_image, PNMImage *pnm_image, char* output_file_name)
+{
+    if (pgm_image == NULL)
+    {
+        printf("%s\n", WRITING_PNM_IMAGE);
+        write_PNM_image(pnm_image, output_file_name);
+    }
+
+    if (pnm_image == NULL)
+    {
+        printf("%s\n", WRITING_PGM_IMAGE);
+        write_PGM_image(pgm_image, output_file_name);
+    }
+}
+
+
 #endif
