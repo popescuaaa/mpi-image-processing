@@ -12,6 +12,7 @@
     // TODO: remove this comment and add more esteic ones
     // TODO: line length is huge
     // TODO: remove duplicated code or think for alternative solutions
+    // TODO: wrong matrix bounding line + column
 **/
 
 #ifndef IMAGE_PROCESSOR
