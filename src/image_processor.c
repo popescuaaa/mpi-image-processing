@@ -30,6 +30,8 @@ int main(int argc, char const *argv[])
     #endif
 
 	printf("%d\n", image -> width);
+	char *out = "test.pgm";
+	write_image(image, NULL, out);
     free(image);
     return 0;
 }

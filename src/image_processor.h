@@ -215,7 +215,44 @@ PNMImage *read_PNM_image(char *image_file_name)
 
 void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
 {
+    FILE *out = fopen(output_file_name, "wb");
+    if (out == NULL) 
+    {
+        printf("%s\n", FILE_ERROR_MESSAGE);
+        exit(1);
+    }
     
+    int line;
+    int column;
+    unsigned char *delimiter = " ";
+    unsigned char *comment_line = COMMENT_LINE_GIMP;
+    unsigned char *separator = "\n";
+    unsigned char *image_type = (unsigned char*) malloc(IMAGE_TYPE_SIZE_OUT * sizeof(unsigned char));
+    strcat(image_type, pgm_image -> image_type);
+    strcat(image_type, separator);
+    int w = 1680;
+    int h = 1050;
+    int m = 255;
+
+    fwrite(image_type, sizeof(unsigned char), IMAGE_TYPE_SIZE_OUT, out);
+    fwrite(comment_line, sizeof(unsigned char), COMMENT_LINE_FIXED_LENGTH + 1, out);
+    fwrite(&w, sizeof(int), 1, out);
+    fwrite(delimiter, sizeof(unsigned char), 1, out);
+    fwrite(&h, sizeof(int), 1, out);
+    fwrite(separator, sizeof(unsigned char), 1, out);
+    fwrite(&m, sizeof(int), 1, out);
+    fwrite(separator, sizeof(unsigned char), 1, out);
+    
+    for (line = 0; line < pgm_image -> height; ++line)
+    {
+        for (column = 0; column < pgm_image -> width; ++column)
+        {
+            fwrite(&pgm_image -> image_matrix[line][column], sizeof(unsigned char), RUNNER_DEFAUT_VALUE, out);
+        }
+    }    
+
+    fclose(out);
+    printf("Done\n");
 }
 
 void write_PNM_image(PNMImage *pnm_image, char *output_file_name)
