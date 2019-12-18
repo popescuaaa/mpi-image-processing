@@ -215,7 +215,7 @@ PNMImage *read_PNM_image(char *image_file_name)
 
 void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
 {
-    FILE *out = fopen(output_file_name, "w+b");
+    FILE *out = fopen(output_file_name, "wb");
     if (out == NULL) 
     {
         printf("%s\n", FILE_ERROR_MESSAGE);
@@ -248,10 +248,7 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
     
     for (line = 0; line < pgm_image -> height; ++line)
     {
-        for (column = 0; column < pgm_image -> width; ++column)
-        {
-            fwrite(&pgm_image -> image_matrix[line][column], sizeof(unsigned char), RUNNER_DEFAUT_VALUE, out);
-        }
+        fwrite(pgm_image -> image_matrix[line], sizeof(unsigned char), pgm_image -> width, out);   
     }    
 
     fclose(out);
