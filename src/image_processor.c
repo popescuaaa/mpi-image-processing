@@ -5,12 +5,12 @@
 
 int main(int argc, char const *argv[])
 {
-    char file_name[40] = "../PNM/baby-yoda.pnm";
+    char file_name[40] = "../PGM/darth-vader.pgm";
 	int type = image_type(file_name);
-	PNMImage *image;
-	if(type == PNM_TYPE)
+	PGMImage *image;
+	if(type == PGM_TYPE)
 	{
-		image = read_PNM_image(file_name);
+		image = read_PGM_image(file_name);
 	}
     
  	

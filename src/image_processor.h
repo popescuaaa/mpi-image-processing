@@ -52,7 +52,10 @@ int image_type(char *image_file_name)
 
 PGMImage *read_PGM_image(char *image_file_name) 
 {
-    int line, column;
+    int line; 
+    int column;
+    int pixel_index;
+
     PGMImage *image_structure = (PGMImage *) malloc(1 * sizeof(PGMImage));
 
     FILE *image = fopen(image_file_name, "rb");
@@ -111,11 +114,15 @@ PGMImage *read_PGM_image(char *image_file_name)
         image_matrix[line] = (unsigned char *) malloc(image_structure -> width * sizeof(unsigned char));
     }
 
+
+    pixel_index = 0;
+
     for (line = 0; line < image_structure -> height; ++line) 
     {
         for (column = 0; column < image_structure -> width; ++column) 
         {
-            image_matrix[line][column] = image_content[line + column];
+            image_matrix[line][column] = image_content[pixel_index];
+            pixel_index++;
         }
     }
     
@@ -128,7 +135,10 @@ PGMImage *read_PGM_image(char *image_file_name)
 
 PNMImage *read_PNM_image(char *image_file_name) 
 {
-    int line, column;
+    int line;
+    int column;
+    int pixel_index;
+
     PNMImage *image_structure = (PNMImage *) malloc(1 * sizeof(PNMImage));
 
     FILE *image = fopen(image_file_name, "rb");
@@ -186,11 +196,14 @@ PNMImage *read_PNM_image(char *image_file_name)
         rgb_image_matrix[line] = (Pixel *) malloc(image_structure -> width * sizeof(Pixel));
     }
 
+    pixel_index = 0;
+
     for (line = 0; line < image_structure -> height; ++line) 
     {
         for (column = 0; column < image_structure -> width; ++column) 
         {
-            rgb_image_matrix[line][column] = rgb_content[line + column];
+            rgb_image_matrix[line][column] = rgb_content[pixel_index];
+            pixel_index++;
         }
     }
     
