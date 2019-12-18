@@ -215,7 +215,7 @@ PNMImage *read_PNM_image(char *image_file_name)
 
 void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
 {
-    FILE *out = fopen(output_file_name, "wb");
+    FILE *out = fopen(output_file_name, "w+b");
     if (out == NULL) 
     {
         printf("%s\n", FILE_ERROR_MESSAGE);
@@ -224,23 +224,26 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
     
     int line;
     int column;
+    unsigned char width[WIDTH_DEFAULT_LENGTH];
+    unsigned char height[HEIGHT_DEFAULT_LENGHT];
+    unsigned char max_val[MAX_VAL_DEFAULT_LENGHT];
     unsigned char *delimiter = " ";
     unsigned char *comment_line = COMMENT_LINE_GIMP;
     unsigned char *separator = "\n";
     unsigned char *image_type = (unsigned char*) malloc(IMAGE_TYPE_SIZE_OUT * sizeof(unsigned char));
+    sprintf(width, "%d", pgm_image -> width);
+    sprintf(height, "%d", pgm_image -> height);
+    sprintf(max_val, "%d", pgm_image -> max_val);
     strcat(image_type, pgm_image -> image_type);
     strcat(image_type, separator);
-    int w = 1680;
-    int h = 1050;
-    int m = 255;
 
     fwrite(image_type, sizeof(unsigned char), IMAGE_TYPE_SIZE_OUT, out);
     fwrite(comment_line, sizeof(unsigned char), COMMENT_LINE_FIXED_LENGTH + 1, out);
-    fwrite(&w, sizeof(int), 1, out);
+    fwrite(width, sizeof(unsigned char), strlen(width), out);
     fwrite(delimiter, sizeof(unsigned char), 1, out);
-    fwrite(&h, sizeof(int), 1, out);
+    fwrite(height, sizeof(unsigned char), strlen(height), out);
     fwrite(separator, sizeof(unsigned char), 1, out);
-    fwrite(&m, sizeof(int), 1, out);
+    fwrite(max_val, sizeof(unsigned char), strlen(max_val), out);
     fwrite(separator, sizeof(unsigned char), 1, out);
     
     for (line = 0; line < pgm_image -> height; ++line)
@@ -252,12 +255,59 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
     }    
 
     fclose(out);
-    printf("Done\n");
+    free(image_type);
+    printf("%s\n", FINISHED_WRITING);
 }
 
 void write_PNM_image(PNMImage *pnm_image, char *output_file_name)
 {
+    FILE *out = fopen(output_file_name, "w+b");
+    if (out == NULL) 
+    {
+        printf("%s\n", FILE_ERROR_MESSAGE);
+        exit(1);
+    }
+    
+    int line;
+    int column;
+    unsigned char width[WIDTH_DEFAULT_LENGTH];
+    unsigned char height[HEIGHT_DEFAULT_LENGHT];
+    unsigned char max_val[MAX_VAL_DEFAULT_LENGHT];
+    unsigned char *delimiter = " ";
+    unsigned char *comment_line = COMMENT_LINE_GIMP;
+    unsigned char *separator = "\n";
+    unsigned char *image_type = (unsigned char*) malloc(IMAGE_TYPE_SIZE_OUT * sizeof(unsigned char));
+    sprintf(width, "%d", pnm_image -> width);
+    sprintf(height, "%d", pnm_image -> height);
+    sprintf(max_val, "%d", pnm_image -> max_val);
+    strcat(image_type, pnm_image -> image_type);
+    strcat(image_type, separator);
 
+    fwrite(image_type, sizeof(unsigned char), IMAGE_TYPE_SIZE_OUT, out);
+    fwrite(comment_line, sizeof(unsigned char), COMMENT_LINE_FIXED_LENGTH + 1, out);
+    fwrite(width, sizeof(unsigned char), strlen(width), out);
+    fwrite(delimiter, sizeof(unsigned char), 1, out);
+    fwrite(height, sizeof(unsigned char), strlen(height), out);
+    fwrite(separator, sizeof(unsigned char), 1, out);
+    fwrite(max_val, sizeof(unsigned char), strlen(max_val), out);
+    fwrite(separator, sizeof(unsigned char), 1, out);
+    
+    for (line = 0; line < pnm_image -> height; ++line)
+    {
+        for (column = 0; column < pnm_image -> width; ++column)
+        {
+            fwrite(&pnm_image -> rgb_image_matrix[line][column].red, sizeof(unsigned char), RUNNER_DEFAUT_VALUE, out);
+            
+            fwrite(&pnm_image -> rgb_image_matrix[line][column].green, sizeof(unsigned char), RUNNER_DEFAUT_VALUE, out);
+        
+            fwrite(&pnm_image -> rgb_image_matrix[line][column].blue, sizeof(unsigned char), RUNNER_DEFAUT_VALUE, out);
+        
+        }
+    }    
+
+    fclose(out);
+    free(image_type);
+    printf("%s\n", FINISHED_WRITING);
 }
 
 void write_image(PGMImage *pgm_image, PNMImage *pnm_image, char* output_file_name)

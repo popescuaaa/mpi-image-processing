@@ -5,12 +5,12 @@
 
 int main(int argc, char const *argv[])
 {
-    char file_name[40] = "../PGM/darth-vader.pgm";
+    char file_name[40] = "../PNM/baby-yoda.pnm";
 	int type = image_type(file_name);
-	PGMImage *image;
-	if(type == PGM_TYPE)
+	PNMImage *image;
+	if(type == PNM_TYPE)
 	{
-		image = read_PGM_image(file_name);
+		image = read_PNM_image(file_name);
 	}
     
  	
@@ -30,8 +30,8 @@ int main(int argc, char const *argv[])
     #endif
 
 	printf("%d\n", image -> width);
-	char *out = "test.pgm";
-	write_image(image, NULL, out);
+	char *out = "test.pnm";
+	write_image(NULL, image, out);
     free(image);
     return 0;
 }
