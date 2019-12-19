@@ -22,3 +22,4 @@
 #define FILTER_HEIGHT 3
 #define IMAGE_TYPE_SIZE_OUT 3
 #endif
+

@@ -66,41 +66,29 @@ PGMImage *read_PGM_image(char *image_file_name)
         exit(1);
     }    
 
-    char *image_type = (char*) malloc(2 * sizeof(char));
-    fread(image_type, 2, sizeof(char), image);
+    unsigned char *image_type = (unsigned char*) malloc(IMAGE_TYPE_SIZE * sizeof(char));
+    fread(image_type, sizeof(unsigned char), IMAGE_TYPE_SIZE, image);
+    printf("%s\n",image_type);
     image_structure -> image_type = image_type;
-
+    printf("%s\n",image_structure -> image_type);
     unsigned char comment_line[45];
     fread(comment_line, sizeof(unsigned char), sizeof(comment_line) + 1, image);
     
     unsigned char width[5], height[5], max_val[5];
     unsigned char runner;
 
-    fread(&runner, sizeof(unsigned char), 1, image); width[0] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); width[1] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); width[2] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); width[3] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); width[4] = runner;
-   
+    fread(width, sizeof(unsigned char), WIDTH_DEFAULT_LENGTH, image); 
+
     image_structure -> width = atoi(width);
     
     fread(&runner, sizeof(unsigned char), 1, image); 
 
-    fread(&runner, sizeof(unsigned char), 1, image); height[0] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); height[1] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); height[2] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); height[3] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); height[4] = runner;
-   
+    fread(height, sizeof(unsigned char), HEIGHT_DEFAULT_LENGHT, image);
+    
     image_structure -> height = atoi(height);
     
-
-    fread(&runner, sizeof(unsigned char), 1, image); max_val[0] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); max_val[1] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); max_val[2] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); max_val[3] = runner;
-    fread(&runner, sizeof(unsigned char), 1, image); max_val[4] = runner;
-
+    fread(max_val, sizeof(unsigned char), MAX_VAL_DEFAULT_LENGHT, image); 
+  
     image_structure -> max_val = atoi(max_val);
 
     unsigned char *image_content = (unsigned char *) malloc((image_structure -> width * image_structure -> height) * sizeof(unsigned char));
@@ -230,14 +218,13 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
     unsigned char *delimiter = " ";
     unsigned char *comment_line = COMMENT_LINE_GIMP;
     unsigned char *separator = "\n";
-    unsigned char *image_type = (unsigned char*) malloc(IMAGE_TYPE_SIZE_OUT * sizeof(unsigned char));
     sprintf(width, "%d", pgm_image -> width);
     sprintf(height, "%d", pgm_image -> height);
     sprintf(max_val, "%d", pgm_image -> max_val);
-    strcat(image_type, pgm_image -> image_type);
-    strcat(image_type, separator);
+   
 
-    fwrite(image_type, sizeof(unsigned char), IMAGE_TYPE_SIZE_OUT, out);
+    fwrite(pgm_image -> image_type, sizeof(unsigned char), IMAGE_TYPE_SIZE, out);
+    fwrite(separator, sizeof(unsigned char), 1, out);
     fwrite(comment_line, sizeof(unsigned char), COMMENT_LINE_FIXED_LENGTH + 1, out);
     fwrite(width, sizeof(unsigned char), strlen(width), out);
     fwrite(delimiter, sizeof(unsigned char), 1, out);
@@ -246,11 +233,11 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
     fwrite(max_val, sizeof(unsigned char), strlen(max_val), out);
     fwrite(separator, sizeof(unsigned char), 1, out);
     
-    for (line = 0; line < pgm_image -> height; ++line)
-    {
-        fwrite(pgm_image -> image_matrix[line], sizeof(unsigned char), pgm_image -> width, out);   
-    }    
-
+    // for (line = 0; line < pgm_image -> height; ++line)
+    // {
+    //     fwrite(pgm_image -> image_matrix[line], sizeof(unsigned char), pgm_image -> width, out);   
+    // }    
+    fwrite(pgm_image -> image_content, sizeof(unsigned char), pgm_image -> width * pgm_image -> height, out);
     // fprintf(out, "%s\n", pgm_image -> image_type);
     // fprintf(out, "%s\n", COMMENT_LINE_GIMP);
     // fprintf(out, "%d %d\n", pgm_image -> width, pgm_image -> height);
@@ -264,7 +251,6 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
     // }
 
     fclose(out);
-    free(image_type);
     printf("%s\n", FINISHED_WRITING);
 }
 
