@@ -251,6 +251,18 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
         fwrite(pgm_image -> image_matrix[line], sizeof(unsigned char), pgm_image -> width, out);   
     }    
 
+    // fprintf(out, "%s\n", pgm_image -> image_type);
+    // fprintf(out, "%s\n", COMMENT_LINE_GIMP);
+    // fprintf(out, "%d %d\n", pgm_image -> width, pgm_image -> height);
+    // fprintf(out, "%d\n", pgm_image -> max_val);
+    // for(line  = 0; line < pgm_image -> height; ++line)
+    // {
+    //     for (column = 0; column < pgm_image -> width; ++column)
+    //     {
+    //        fprintf(out, "%u",(unsigned char) pgm_image -> image_matrix[line][column]);
+    //     }
+    // }
+
     fclose(out);
     free(image_type);
     printf("%s\n", FINISHED_WRITING);
