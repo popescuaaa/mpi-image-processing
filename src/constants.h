@@ -21,5 +21,6 @@
 #define FILTER_WIDTH 3
 #define FILTER_HEIGHT 3
 #define IMAGE_TYPE_SIZE_OUT 3
+#define WIDTH_TAG 1
 #endif
 

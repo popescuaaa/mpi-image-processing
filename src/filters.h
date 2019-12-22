@@ -28,7 +28,7 @@ const float mean_removal[FILTER_HEIGHT][FILTER_WIDTH] =
 {
     { -1.0, -1.0, -1.0},
     { -1.0, 9.0, -1.0},
-    { 1.0 / 9.0, 1.0 / 9/0, 1.0 / 9.0}
+    { 1.0 / 9.0, 1.0 / 9.0, 1.0 / 9.0}
 };
 
 const float embross[FILTER_HEIGHT][FILTER_WIDTH] = 

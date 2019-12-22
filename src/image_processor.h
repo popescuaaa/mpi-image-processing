@@ -9,7 +9,7 @@
  *    image structure to the main function
  *
  *    // TODO: defensive programming over all parameters
- * 
+ *    // TODO: add param and return type for all functions
  * 
  */ 
 
@@ -395,8 +395,8 @@ void write_PNM_image(PNMImage *pnm_image, char *output_file_name)
            1, 
            out);
         
-    fwrite(pnm_image -> image_content, 
-           sizeof(unsigned char), 
+    fwrite(pnm_image -> rgb_content, 
+           sizeof(Pixel), 
            pnm_image -> width * 
            pnm_image -> height, 
            out);
@@ -419,6 +419,7 @@ void write_image(PGMImage *pgm_image, PNMImage *pnm_image, char* output_file_nam
         write_PGM_image(pgm_image, output_file_name);
     }
 }
+
 
 
 #endif
