@@ -1,0 +1,83 @@
+
+	/* PLACINTA ALEXANDRU - 334CB - FISIER README */
+
+
+1. Detalii de implementare:
+
+	Pentru inceput am definit niste tag-uri semnificative entru a marca diferitele evenimente din cadrul programului:
+		- WIDTH_TAG = folosit pentru a transmite la inceput, diemnsiunea unei linii tuturor nodurilor, primul mesaj de acest tip e folosit si pentru
+				a se afla parintele fiecarui nod, deoarece la curs s-a definit parintele ca fiind nodul de la care se primeste primul mesaj.
+		
+		- ACK_TAG = folosit de fiecare nod de a astpeta confirmarea de la toti copii si pentru a confirma acest lucru parintelui.
+				Fiecare nod primeste dimensiunea, o trimite copiilor si asteapta apoi de la fiecare copil un mesaj
+				pe tag-ul ACK_TAG, iar dupa ce a primit toate confirmarile de la copii transmite confirmarea, tot cu acelasi tag
+				parintelui.
+		
+		- SOBEL_TAG = folosit pentru a transmite matricea, nodurile intermediare asteapta bucati e matrice pe MPI_ANY_TAG, inclusiv nodurile frunze.
+				Acest tag este semnificativ pentru nodurile frunze, atunci cand se aplica filtrul. Nodurile frunza vor apela o procedura
+				ce aplica filtrul in functie de tag-ul de filtru care este preluat din structura MPI_STATUS.
+
+		- MEAN_REMOVAL_TAG = Aceeasi semnificatie cu SOBEL_TAG, dar desemneaza alt tip de filtru.
+
+		- MATRIX_PROCESSED_TAG = Dupa ce fiecare nod frunza prelucreaza matricea, aceasta o trimite parintelui, iar pentru a fi mai usor sa urmaresc semnifactia
+					mesajelor am creat acest tag, pentru a sti cu exactitate ce reprezinta anumite mesaje.
+					Analog, dupa ce fiecare nod intermediar primeste bucatile de matrice si le asambleaza, va transmite matricea modificta parintelui
+					pe acest tag.
+
+		- SIZE_TAG = Inainte ca un nod intermediar sa trimita o bucata din matrice copiilor acesta va trimite dimensiunea locului respectiv.
+				Fiecare nod asculta pe tag-ul acesta pentru a receptiona dimensiunea matricei si pentru a sti cat sa aloce.
+
+		- END_TAG = Orice mesaj primit pe acest tag anunta procesul respectiv ca trebuie sa isi incheie executia. La primirea unui mesaj pe acest tag, procesul
+				respectiv trimite mesajul copiilor, tot pe acest tag, iar apoi va astepta statistica de al fiecare copil, pe care ova asamblaintr-o
+				statistica finala pe care o va trimite mai apoi parintelui, urmand ca acela sa faca acelasi lucru pana se ajunge la radacina, care dupa
+				asamblare va scrie statistica finala in fisier.
+
+		- STATISTIC_TAG = Orice ce mesaj primit pe acest tag inseamna o statistica partiala primita de nodul respectiv de la copii sai. Acesta va trebui sa asambleze toate
+					statisticile de la copii, eu personal am implementat folosind un vector, iar apoi sa trimita statistica mai departe
+
+		- STATISTIC_SIZE_TAG = Inainte de a trimite statistica parintelui, pe care o tin sub forma de vector, copilul va trebui sa anunte parintelui dimensiunea
+				 	acesteia.
+
+		Dupa definirea acestor tag-uri si stabilirea semnificatie mesajelor, am inceput implementarea functiei ce aplica filtrele, a celei ce citeste matricea de pixeli, si a scrierii
+	in fisier.
+		
+		Nodul 0, radacina, citeste din imagine metadatele si pixelii, trimite fiecarui vecin latimea unei linii, cu tag-ul WIDTH_TAG, iar apoi asteapta o confirmare de la fiecare copil.
+		Fiecare nod intermediar care primeste latimea unei linii o transmite copiilor si asteapta o confirmare de la fiecare, iar dupa ce a primit confirmarea de al feicare copil
+		Dupa ce acesta a primit confirmarea de la fiecare copil, acesta transmite confirmarea nodului parinte.
+
+		Dupa ce nodul 0, radacina, a primit confirmarea de la toti copiii, acesta va imparti blocurile in dimensiuni egale, mai putin ultimul copil care va primi
+	o bucata inegala uneori. Radacina va trimite blocurile la copii, iar apoi va astepta de al fiecare sa primeasca rezultatele si le va reasmbla.
+		La primirea unei bucati de matrice ce trebuie procesate, un nod intermediar (nefrunza), calculeaza dimensiunea unuibloc ce trebuie sa il dea copiilor. Daca aceasta dimensiunea este
+	mai mare decat 0, atunci pot imparti matricea copiilor, iar daca era egala cu 0, atunci inseamna ca trimit primului copil matricea toata, iar celorlalti le voi trimite o dimensiune 0, pentru
+	a nu ii face sa ramana blocati.
+		Dupa impartirea blocului si trimiterea sa la copii un nod intermediar va astepta sa primeasca bucatile modificate pe care le va asambla, iar apoi va trimite bucata mdoficata
+	parintelui.
+		Un nod frunza astapta matricea si in functie de tag-ul pe care a primit-o, laut din structura MPI_STATUS, va aplica filtrul respectiv pe bucata de matrice pe care a primit-o, iar
+	apoi o va trimite parintelui, si va incrementa numarul de linii procesate.
+		La primirea matricei modifcate, nodul 0 va asambla toate bucatile de la vecini, iar apoi va scrie metadatele si noua matrice in fisier.
+
+		Pasii enumarati mai sus se reiau pana cand nodul 0 trimite mesajul cu tag-ul de terminare copiilor, care vor propaga terminarea mai departe.
+		Atunci cand noudl 0 a terminat de citit comenzi din fisier, acesta va transmite un mesaj pe tag-ul de terminare tuturor copiilor, iar apoi va astepta un mesaj cu
+	tag-ul STATISTIC_SIZE_TAG de la fiecare copil, care desemneaza dimensiunea statisticii primita de la fiecare copil, pentru a o putea asambla si a scrie statistica finala.
+		Dupa acestea nodul 0 isi va incheia executia.
+		Cand o frunza primeste un mesaj cu tag-ul de terminare, aceasta va crea un vector cu 2 elemente, ranku-ul sau si numarul de linii procesate, va transmite parintelui un
+	mesaj pe tag-ul STATISTIC_SIZE_TAG ce va contine un int de dimensiune 2, iar apoi va trimite elementele din vector, iar apoi isi va incheia executia.
+		Cand un nod intermediar, nefrunza si neradacina, primeste un mesaj pe tag-ul de terminare, acesta trimite acel mesaj tuturor copiilor si asteapta de la ei statisticile pentru
+	a le asambla si a trimita statistica partiala parintelui, iar apoi isi incheie executia.
+
+		Statistica pe care fiecare nod o transmite la nodul parinte este tinuta sub forma unu vector in care elementele vectorului sunt complementare 2 cate 2 in urmatorul sens:
+			- (v[i] si v[i + 1]), (v[i + 2], v[i + 3]) etc
+			- v[i] reprezinta rank-ul si v[i + 1] reprezinta numarul de linii procesate
+			- cand un nod intermediar, neradacina si nefrunza, primeste statistica, el o adauga in vector, astfel ca de fiecare data la parinte se va
+			trimite un vector ce contine doar reank-urile frunzelor si numarul de linii procesate de acestea, restul subintelegandu-se ca au liniile procesate
+			egale cu 0
+			- radacina tine minte statistica sub forma unui obiect map<int, int>, unde map[i] = numarul de linii procesate de procesul cu ranku-ul 0 (aceasta mapa
+			este initializata cu valorea 0 pentru toate rank-urile proceselor)
+			- cand nodul cu rank 0 asambleaza statisticile primite de la vecini, el va completa numai pentru procesele care au procesat randuri, adica doar pentru
+			frunze.
+
+2. Timpi de executie:
+	
+	Pentru procesarea tuturor imaginilor timpii sunt urmatorii:
+		- 10 minute pentru topologia 1
+		- 15 minute pentru topologia 2
