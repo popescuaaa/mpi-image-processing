@@ -116,13 +116,6 @@ PGMImage *read_PGM_image(char *image_file_name)
                                          image_structure -> height) * 
                                          sizeof(unsigned char));
 
-    fread(image_content, 
-          sizeof(unsigned char), 
-          image_structure -> width * 
-          image_structure -> height, 
-          image);
-    
-    image_structure -> image_content = image_content;
 
     unsigned char **image_matrix = 
                 (unsigned char **) malloc(image_structure -> height * 
@@ -133,15 +126,13 @@ PGMImage *read_PGM_image(char *image_file_name)
                 (unsigned char *) malloc(image_structure -> width * 
                                          sizeof(unsigned char));
     }
-
-    pixel_index = 0;
-
+    
     for (line = 0; line < image_structure -> height; ++line) 
     {
         for (column = 0; column < image_structure -> width; ++column) 
         {
-            image_matrix[line][column] = image_content[pixel_index];
-            pixel_index++;
+            fread(&image_matrix[line][column], sizeof(unsigned char), 1, image);
+           
         }
     }
     
@@ -216,12 +207,7 @@ PNMImage *read_PNM_image(char *image_file_name)
             (Pixel *) malloc(image_structure -> width * 
                              image_structure -> height * 
                              sizeof(Pixel));
-    fread(rgb_content, 
-          sizeof(Pixel), 
-          image_structure -> width * image_structure ->height, 
-          image);
     
-    image_structure -> rgb_content = rgb_content;
 
     Pixel **rgb_image_matrix= 
             (Pixel **) malloc(image_structure -> height * 
@@ -234,14 +220,12 @@ PNMImage *read_PNM_image(char *image_file_name)
                              sizeof(Pixel));
     }
 
-    pixel_index = 0;
-
+    
     for (line = 0; line < image_structure -> height; ++line) 
     {
         for (column = 0; column < image_structure -> width; ++column) 
         {
-            rgb_image_matrix[line][column] = rgb_content[pixel_index];
-            pixel_index++;
+            fread(&rgb_image_matrix[line][column], sizeof(Pixel), 1, image);
         }
     }
     
@@ -318,11 +302,13 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
            1, 
            out);
         
-    fwrite(pgm_image -> image_content, 
-           sizeof(unsigned char), 
-           pgm_image -> width * 
-           pgm_image -> height, 
-           out);
+    for (line = 0; line < pgm_image -> height; ++line) 
+    {
+        for (column = 0; column < pgm_image -> width; ++column) 
+        {
+            fwrite(&(pgm_image -> image_matrix[line][column]), sizeof(unsigned char), 1, out);
+        }
+    }
 
     fclose(out);
     printf("%s\n", FINISHED_WRITING);
@@ -394,12 +380,14 @@ void write_PNM_image(PNMImage *pnm_image, char *output_file_name)
            sizeof(unsigned char), 
            1, 
            out);
-        
-    fwrite(pnm_image -> rgb_content, 
-           sizeof(Pixel), 
-           pnm_image -> width * 
-           pnm_image -> height, 
-           out);
+  
+    for (line = 0; line < pnm_image -> height; ++line) 
+    {
+        for (column = 0; column < pnm_image -> width; ++column) 
+        {
+            fwrite(&(pnm_image -> rgb_image_matrix[line][column]), sizeof(Pixel), 1, out);
+        }
+    }
 
     fclose(out);
     printf("%s\n", FINISHED_WRITING);
