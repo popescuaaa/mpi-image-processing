@@ -6,8 +6,8 @@
 
 int main(int argc, char const *argv[])
 {
-    PNMImage *image = read_PNM_image("../PNM/lena.pnm");
-    write_image(NULL, image, "test.pnm");
+    PGMImage *image = read_PGM_image("../PGM/darth-vader.pgm");
+    write_image(image, NULL, "out.pgm");
     return 0;
 }
 

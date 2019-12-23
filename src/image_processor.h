@@ -67,49 +67,25 @@ PGMImage *read_PGM_image(char *image_file_name)
     unsigned char *image_type = 
             (unsigned char*) malloc(IMAGE_TYPE_SIZE * sizeof(char));
 
-    fread(image_type, 
-          sizeof(unsigned char), 
-          IMAGE_TYPE_SIZE, 
-          image);
+    fscanf(image, "%s\n", image_type);
 
     image_structure -> image_type = image_type;
 
     unsigned char comment_line[45];
-    fread(comment_line, 
-          sizeof(unsigned char), 
-          COMMENT_LINE_FIXED_LENGTH + 1, 
-          image);
     
-    unsigned char width[5]; 
-    unsigned char height[5]; 
-    unsigned char max_val[5];
-    unsigned char runner;
+    fscanf(image, "%[^\n]%*c", comment_line);
+    
+    int width, height, max_val;
 
-    fread(width, 
-          sizeof(unsigned char), 
-          WIDTH_DEFAULT_LENGTH, 
-          image); 
+    fscanf(image, "%d %d\n", &width, &height); 
 
-    image_structure -> width = atoi(width);
+    image_structure -> width = width;
     
-    fread(&runner, 
-          sizeof(unsigned char), 
-          1, 
-          image); 
-
-    fread(height, 
-          sizeof(unsigned char), 
-          HEIGHT_DEFAULT_LENGHT, 
-          image);
+    image_structure -> height = height;
     
-    image_structure -> height = atoi(height);
-    
-    fread(max_val, 
-          sizeof(unsigned char), 
-          MAX_VAL_DEFAULT_LENGHT, 
-          image); 
+    fscanf(image, "%d\n", &max_val);
   
-    image_structure -> max_val = atoi(max_val);
+    image_structure -> max_val = max_val;
 
     unsigned char *image_content = 
                (unsigned char *) malloc((image_structure -> width * 
@@ -120,6 +96,7 @@ PGMImage *read_PGM_image(char *image_file_name)
     unsigned char **image_matrix = 
                 (unsigned char **) malloc(image_structure -> height * 
                                           sizeof(unsigned char *));
+
     for (line = 0; line < image_structure -> height; ++line) 
     {
         image_matrix[line] = 
@@ -129,11 +106,8 @@ PGMImage *read_PGM_image(char *image_file_name)
     
     for (line = 0; line < image_structure -> height; ++line) 
     {
-        for (column = 0; column < image_structure -> width; ++column) 
-        {
-            fread(&image_matrix[line][column], sizeof(unsigned char), 1, image);
-           
-        }
+        fread(image_matrix[line], sizeof(unsigned char), image_structure -> width, image);    
+        
     }
     
     image_structure -> image_matrix = image_matrix;
@@ -160,48 +134,27 @@ PNMImage *read_PNM_image(char *image_file_name)
     }    
 
     unsigned char *image_type = 
-                (unsigned char*) malloc(IMAGE_TYPE_SIZE * 
-                                        sizeof(char));
-    fread(image_type, 
-          sizeof(unsigned char), 
-          IMAGE_TYPE_SIZE, 
-          image);
+            (unsigned char*) malloc(IMAGE_TYPE_SIZE * sizeof(char));
+
+    fscanf(image, "%s\n", image_type);
 
     image_structure -> image_type = image_type;
 
     unsigned char comment_line[45];
-    fread(comment_line, 
-          sizeof(unsigned char), 
-          COMMENT_LINE_FIXED_LENGTH + 1, 
-          image);
     
-    unsigned char width[5]; 
-    unsigned char height[5];
-    unsigned char max_val[5];
-    unsigned char runner;
+    fscanf(image, "%[^\n]%*c", comment_line);
+    
+    int width, height, max_val;
 
-    fread(width, 
-          sizeof(unsigned char), 
-          WIDTH_DEFAULT_LENGTH, 
-          image); 
-   
-    image_structure -> width = atoi(width);
-    
-    fread(&runner, sizeof(unsigned char), 1, image); 
+    fscanf(image, "%d %d\n", &width, &height); 
 
-    fread(height, 
-          sizeof(unsigned char), 
-          HEIGHT_DEFAULT_LENGHT, 
-          image);
-   
-    image_structure -> height = atoi(height);
+    image_structure -> width = width;
     
-    fread(max_val, 
-          sizeof(unsigned char), 
-          MAX_VAL_DEFAULT_LENGHT, 
-          image);
+    image_structure -> height = height;
+    
+    fscanf(image, "%d\n", &max_val);
   
-    image_structure -> max_val = atoi(max_val);
+    image_structure -> max_val = max_val;
 
     Pixel *rgb_content = 
             (Pixel *) malloc(image_structure -> width * 
@@ -269,7 +222,12 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
 
     fwrite(comment_line, 
            sizeof(unsigned char), 
-           COMMENT_LINE_FIXED_LENGTH + 1, 
+           COMMENT_LINE_FIXED_LENGTH, 
+           out);
+
+    fwrite(separator, 
+           sizeof(unsigned char), 
+           1, 
            out);
 
     fwrite(width, 
@@ -304,10 +262,9 @@ void write_PGM_image(PGMImage *pgm_image, char *output_file_name)
         
     for (line = 0; line < pgm_image -> height; ++line) 
     {
-        for (column = 0; column < pgm_image -> width; ++column) 
-        {
-            fwrite(&(pgm_image -> image_matrix[line][column]), sizeof(unsigned char), 1, out);
-        }
+    
+        fwrite(pgm_image -> image_matrix[line], sizeof(unsigned char), pgm_image -> width, out);
+        
     }
 
     fclose(out);

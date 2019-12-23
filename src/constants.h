@@ -7,7 +7,7 @@
 #define SUPPORTED_FORMATS_ERROR "None of the supported formats"
 #define WRITING_PGM_IMAGE       "Writing PGM image to file..."
 #define WRITING_PNM_IMAGE 	    "Writing PNM image to file..."
-#define COMMENT_LINE_GIMP       "# Created by GIMP version 2.10.14 PNM plug-in\n"
+#define COMMENT_LINE_GIMP       "# Created by GIMP version 2.10.14 PNM plug-in"
 #define FINISHED_WRITING        "Finished wrinitng"
 #define RUNNER_DEFAUT_VALUE 1
 #define COMMENT_LINE_FIXED_LENGTH 45
