@@ -176,12 +176,9 @@ PNMImage *read_PNM_image(char *image_file_name)
     
     for (line = 0; line < image_structure -> height; ++line) 
     {
-        for (column = 0; column < image_structure -> width; ++column) 
-        {
-            fread(&rgb_image_matrix[line][column], sizeof(Pixel), 1, image);
-        }
+            fread(rgb_image_matrix[line], sizeof(Pixel), image_structure -> width, image);
     }
-    
+
     image_structure -> rgb_image_matrix = rgb_image_matrix;
 
     fclose(image);
@@ -305,7 +302,12 @@ void write_PNM_image(PNMImage *pnm_image, char *output_file_name)
 
     fwrite(comment_line, 
            sizeof(unsigned char), 
-           COMMENT_LINE_FIXED_LENGTH + 1, 
+           COMMENT_LINE_FIXED_LENGTH, 
+           out);
+
+    fwrite(separator, 
+           sizeof(unsigned char), 
+           1, 
            out);
 
     fwrite(width, 
@@ -340,10 +342,8 @@ void write_PNM_image(PNMImage *pnm_image, char *output_file_name)
   
     for (line = 0; line < pnm_image -> height; ++line) 
     {
-        for (column = 0; column < pnm_image -> width; ++column) 
-        {
-            fwrite(&(pnm_image -> rgb_image_matrix[line][column]), sizeof(Pixel), 1, out);
-        }
+        fwrite(pnm_image -> rgb_image_matrix[line], sizeof(Pixel), pnm_image -> width, out);
+        
     }
 
     fclose(out);
