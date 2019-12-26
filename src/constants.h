@@ -1,6 +1,8 @@
 #ifndef CONSTANTS
 #define CONSTANTS
 
+
+// General purpose constants
 #define FILE_ERROR_MESSAGE      "The file can't be opend/created!"
 #define PNM_FORMAT_SIGNAL       "The input image is in PNM format"
 #define PGM_FORMAT_SIGNAL       "The input image is in PGM format"
@@ -22,5 +24,13 @@
 #define FILTER_HEIGHT 3
 #define IMAGE_TYPE_SIZE_OUT 3
 #define WIDTH_TAG 1
+
+// Distributed processing constants
+#define MASTER 0
+#define CONFIRMTION_MSG 0
+#define UNPROCESSED_MATRIX 0
+#define PROCESSED_MATRIX 1
+#define MASTER_PROCESS_FINISHED "The master process finished the matrix computation"
+
 #endif
 
