@@ -1,2 +1,2 @@
 # mpi-distributed-image-filter
-=Homework no#3= 
+## = Homework no # 3 = 
