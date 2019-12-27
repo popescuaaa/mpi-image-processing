@@ -47,14 +47,16 @@ int main (int argc, char* argv[])
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
     MPI_Comm_size(MPI_COMM_WORLD, &number_of_processes);
     MPI_Status status;
-
+    
+    type_tag = image_type(image_file_name);
+    
     if (rank == MASTER) 
     {
         /**
          *  Main process
          * - the image distribution will be made on height
          **/ 
-        type_tag = image_type(image_file_name);
+       
         int line, column;
         int slave_index;
         int current_line_for_proccess;
@@ -62,9 +64,17 @@ int main (int argc, char* argv[])
         if (type_tag == PGM_TYPE)
         {
            PGMImage *image = read_PGM_image(image_file_name); 
+
            for (slave_index = 1; slave_index < number_of_processes; ++slave_index)
            {
-               MPI_Send(&(image -> width), 1, MPI_INT, slave_index, WIDTH_TAG, MPI_COMM_WORLD);
+               MPI_Send(
+                   &(image -> width), 
+                   1, 
+                   MPI_INT, 
+                   slave_index, 
+                   WIDTH_TAG, 
+                   MPI_COMM_WORLD
+                );
            }
 
            send_size = (image -> height - 2) / number_of_processes;
@@ -76,6 +86,25 @@ int main (int argc, char* argv[])
                /**
                 * Send submatrix
                 **/ 
+                
+               MPI_Send(
+                   &(start), 
+                   1, 
+                   MPI_INT, 
+                   slave_index, 
+                   start, 
+                   MPI_COMM_WORLD
+                );
+
+               MPI_Send(
+                   &(finish), 
+                   1, 
+                   MPI_INT, 
+                   slave_index, 
+                   finish, 
+                   MPI_COMM_WORLD
+                );
+
                for (current_line_to_process = start; current_line_for_proccess < finish; ++current_line_for_proccess)
                {
                     MPI_Send(
@@ -199,20 +228,110 @@ int main (int argc, char* argv[])
             printf("%s\n", MASTER_PROCESS_FINISHED);
         } 
         else
-        {
-            while(1)
-            {
-                
-            }
-        }
+        {  
         
 
+        }
     }
     else 
     {
         /**
          *  Slave process
          **/ 
+
+        int line;
+        int column;
+        int received_width;
+        int start_line_process;
+        int finish_line_process;
+
+        while(1)
+        {
+            MPI_Recv(
+                &received_width, 
+                1, 
+                MPI_INT, 
+                MASTER, 
+                MPI_ANY_TAG, 
+                MPI_COMM_WORLD, 
+                &status
+            );
+
+            MPI_Recv(
+                &start_line_process, 
+                1, 
+                MPI_INT, 
+                MASTER, 
+                MPI_ANY_TAG, 
+                MPI_COMM_WORLD, 
+                &status
+            );
+
+            MPI_Recv(
+                &finish_line_process, 
+                1, 
+                MPI_INT, 
+                MASTER, 
+                MPI_ANY_TAG, 
+                MPI_COMM_WORLD, 
+                &status
+            );
+
+            /**
+             *  Receive input lines in a matrix
+             **/ 
+
+            unsigned char **input_data = (unsigned char **) 
+                                        malloc ((finish_line_process - start_line_process) * 
+                                        sizeof(unsigned char *));
+
+            for (line = 0; line < (finish_line_process - start_line_process); ++line)
+            {
+                input_data[line] = (unsigned char *) 
+                                    malloc(received_width *
+                                    sizeof(unsigned char));
+            }
+
+
+            int received_line_to_process;
+
+            for (received_line_to_process = start_line_process; 
+                received_line_to_process < finish_line_process; 
+                ++received_line_to_process)
+            {
+                MPI_Recv(
+                    input_data[received_line_to_process], 
+                    received_width, 
+                    MPI_UNSIGNED_CHAR, 
+                    MASTER, 
+                    MPI_ANY_TAG, 
+                    MPI_COMM_WORLD, 
+                    &status
+                );
+            }
+
+            /**
+             *  Apply the filter:
+             *  - Every subprocess or slave will know about the current filter
+             *    and will apply it
+             **/ 
+            
+            unsigned char **output_data = (unsigned char **) 
+                                        malloc ((finish_line_process - start_line_process) * 
+                                        sizeof(unsigned char *));
+
+            for (line = 0; line < (finish_line_process - start_line_process); ++line)
+            {
+                output_data[line] = (unsigned char *) 
+                                    malloc(received_width *
+                                    sizeof(unsigned char));
+            }
+
+            
+
+
+        }
+    }
     }
     
     MPI_Finalize(); 
