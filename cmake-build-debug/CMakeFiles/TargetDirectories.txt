@@ -1,0 +1,3 @@
+C:/Users/Popescu Andrei/CLionProjects/mpi-distributed-image-filter/cmake-build-debug/CMakeFiles/mpi-distributed-image-filter.dir
+C:/Users/Popescu Andrei/CLionProjects/mpi-distributed-image-filter/cmake-build-debug/CMakeFiles/edit_cache.dir
+C:/Users/Popescu Andrei/CLionProjects/mpi-distributed-image-filter/cmake-build-debug/CMakeFiles/rebuild_cache.dir

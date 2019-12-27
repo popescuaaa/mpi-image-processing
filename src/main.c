@@ -1,7 +1,7 @@
 /**
  *  Apache spark structure:
  *  - master process or 0 will read the image and 
- *    then  will split it acroos all number of processes - 1 
+ *    then  will split it across all number of processes - 1
  *    slaves 
  *  - they will notify th main process that the data is received
  *  - they will process the data
@@ -229,7 +229,7 @@ int main (int argc, char* argv[])
         } 
         else
         {  
-        
+
 
         }
     }
