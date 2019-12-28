@@ -41,6 +41,7 @@ void send_image_PGM(PGMImage *image, int destination, int start_line, int end_li
 void send_image_PNM(PNMImage *image, int destination, int start_line, int end_line);
 PGMImage *receive_image_PGM(int source);
 PNMImage *receive_image_PNM(int source);
+void apply_filter(PGMImage *image, float **filter, int start_line, int end_line);
 
 int main(int argc, char *argv[]) 
 {
@@ -255,6 +256,12 @@ void process_PNM_image(char *input_image_file_name, char *argv[])
 {
     
 }
+
+/**
+ * 
+ *  Slave process 
+ * 
+ **/ 
 void process_PGM_image_slave( char *input_image_file_name,
                               char *output_image_file_name,
                               char *argv[],
@@ -316,5 +323,181 @@ void process_PGM_image_slave( char *input_image_file_name,
  **/ 
 void send_image_PGM(PGMImage *image, int destination, int start_line, int end_line)
 {
-  
+  MPI_Send(
+    image->image_type, 
+    2, 
+    MPI_UNSIGNED_CHAR, 
+    destination, 
+    DEFAULT_TAG, 
+    MPI_COMM_WORLD
+  );
+
+  MPI_Send(
+    &(image -> width), 
+    1, 
+    MPI_INT, 
+    destination, 
+    DEFAULT_TAG, 
+    MPI_COMM_WORLD
+  );
+
+  int _height = end_line - start_line;
+
+  MPI_Send(
+    &new_height, 
+    1, 
+    MPI_INT, 
+    destination, 
+    DEFAULT_TAG, 
+    MPI_COMM_WORLD
+  );
+
+  MPI_Send(
+    &(image -> max_val),
+     1,
+     MPI_INT,
+     destination,
+     DEFAULT_TAG,
+     MPI_COMM_WORLD
+    );
+
+  int line;
+  for (line = start_line; line < end_line; ++line) {
+    MPI_Send(image -> image[line],
+             image -> width,
+             MPI_UNSIGNED_CHAR,
+             destination,
+             DEFAULT_TAG,
+             MPI_COMM_WORLD
+            );
+  }
+
+}
+
+/**
+ * Used to receive a pgm image from source
+ * 
+ **/
+PGMImage *receive_image_PGM(int source)
+{
+
+ PGMImage *image = (PGMImage *) malloc (sizeof(PGMImage));
+
+  MPI_Recv(
+    image->image_type,
+    2,
+    MPI_INT,
+    source,
+    DEFAULT_TAG,
+    MPI_COMM_WORLD,
+    MPI_STATUS_IGNORE);
+
+  MPI_Recv(
+    &(image -> width),
+    1,
+    MPI_INT,
+    source,
+    DEFAULT_TAG,
+    MPI_COMM_WORLD,
+    MPI_STATUS_IGNORE
+    );
+
+  MPI_Recv(
+    &(image -> height),
+      1,
+      MPI_INT,
+      source,
+      DEFAULT_TAG,
+      MPI_COMM_WORLD,
+      MPI_STATUS_IGNORE
+    );
+
+  MPI_Recv(
+    &(image -> max_val),
+      1,
+      MPI_INT,
+      sender,
+      DEFAULT_TAG,
+      MPI_COMM_WORLD,
+      MPI_STATUS_IGNORE
+    );
+
+  int line;
+  for (line = 0; line < image -> height; ++line) 
+  {
+    MPI_Recv(
+      image -> image_matrix[line],
+      image -> width,
+      MPI_UNSIGNED_CHAR,
+      source,
+      DEFAULT_TAG,
+      MPI_COMM_WORLD,
+      MPI_STATUS_IGNORE);
+  }
+
+  return image;
+
+}
+
+
+void apply_filter(PGMImage *image, float** filter, int start_line, int end_line) 
+{
+  PGMImage result = image;
+
+  int line;
+  int column;
+
+  for (line = start_line; line < end_line; ++line) 
+  {
+    for (column = 0; column < image -> width - 1; ++column) 
+    {
+      if (line == 0 || 
+          column < 1 || 
+          line == image -> height - 1|| 
+          column > image -> width - 2) 
+      {
+        result -> image_matrix[line][column] = image -> image_matrix[line][column];
+      } 
+      else 
+      {
+        unsigned char **p = image -> image_matrix;
+
+        unsigned char pixels[3][3] =
+            {
+              {
+                p[line - 1][column - 1], 
+                p[line - 1][column], 
+                p[line - 1][column + 1]
+              },
+
+              {
+                p[line][column - 1], 
+                p[line][column], 
+                p[line][column + 1]
+              },
+
+              {
+                p[line + 1][column - 1], 
+                p[line + 1][column], 
+                p[line + 1][column + 1]
+              }
+            };
+        
+        float result = 0;
+        for (int i = 0; i < 3; i++)
+          {
+            for (int j = 0; j < 3; j++)
+              {
+                  result += pixels[i][j] * filter[i][j];
+              }
+          }
+          
+        result -> image_matrix[line][column] = (unsigned char) result;
+      }
+    }
+  }
+
+  for (int i = 0; i < image -> height; i++)
+    for (int j = 0; j < image -> width; j++)
+      image -> image_matrix[i][j] = result -> image_matrix[i][j];
 }
