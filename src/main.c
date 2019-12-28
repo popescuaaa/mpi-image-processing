@@ -24,316 +24,297 @@
 #include "image_processor.h"
 #include "filters.h"
 
+void process_PGM_image_master(char *input_image_file_name,
+                       char *output_image_file_name,
+                       char *argv[],
+                       int argc, 
+                       int number_of_processes);
 
-int send_size;
-int start, finish;
-int type_tag;
-char **filters;
-char *image_file_name;
-char *out_file_name;
-char *current_filter;
+void process_PGM_image_slave(char *input_image_file_name,
+                       char *output_image_file_name,
+                       char *argv[],
+                       int argc, 
+                       int number_of_processes);
 
+void process_PNM_image(char *input_image_file_name, char *argv[]);
+void send_image_PGM(PGMImage *image, int destination, int start_line, int end_line);
+void send_image_PNM(PNMImage *image, int destination, int start_line, int end_line);
+PGMImage *receive_image_PGM(int source);
+PNMImage *receive_image_PNM(int source);
 
-int main (int argc, char* argv[])
+int main(int argc, char *argv[]) 
 {
-    int rank;
-    int number_of_processes;
+  int type;  
+  int rank;
+  int number_of_processes;
+  char input_image_file_name[100];
+  char output_image_file_name[100];
+
+  MPI_Init(&argc, &argv);
+  MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+  MPI_Comm_size(MPI_COMM_WORLD, &number_of_processes);
   
-    image_file_name = argv[1];
-    out_file_name = argv[2];
-    current_filter = argv[3];
+  
+  if (rank == 0) 
+  {
+    /**
+     *  Master process: which make a scatter of the image matrix to all
+     *  the slave subprocesses
+     **/ 
+    if (argc < 4) {
+      printf(
+          "Usage: mpirun -np N ./%s input_image.pnm/.pgm output_image.pnm/.pgm filter_1 filter_2 ... filter_X\n",
+          argv[0]);
+      exit(-1);
+    }
 
-    MPI_Init(&argc, &argv);
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &number_of_processes);
-    MPI_Status status;
-    
-    type_tag = image_type(image_file_name);
-    
-    if (rank == MASTER) 
-    {
-        /**
-         *  Main process
-         * - the image distribution will be made on height
-         **/ 
-       
-        int line, column;
-        int slave_index;
-        int current_line_for_proccess;
-
-        if (type_tag == PGM_TYPE)
+        input_image_file_name = argv[1];
+        output_image_file_name = argv[2];
+        type = image_type(input_image_file_name);
+        
+        if (type == PGM_TYPE)
         {
-           PGMImage *image = read_PGM_image(image_file_name); 
-
-           for (slave_index = 1; slave_index < number_of_processes; ++slave_index)
-           {
-               MPI_Send(
-                   &(image -> width), 
-                   1, 
-                   MPI_INT, 
-                   slave_index, 
-                   WIDTH_TAG, 
-                   MPI_COMM_WORLD
-                );
-           }
-
-           send_size = (image -> height - 2) / number_of_processes;
-           start = 0
-           finish = start + send_size + 2;
-
-           for (slave_index = 1; slave_index < number_of_processes - 1; ++slave_index)
-           {
-               /**
-                * Send submatrix
-                **/ 
-                
-               MPI_Send(
-                   &(start), 
-                   1, 
-                   MPI_INT, 
-                   slave_index, 
-                   start, 
-                   MPI_COMM_WORLD
-                );
-
-               MPI_Send(
-                   &(finish), 
-                   1, 
-                   MPI_INT, 
-                   slave_index, 
-                   finish, 
-                   MPI_COMM_WORLD
-                );
-
-               for (current_line_to_process = start; current_line_for_proccess < finish; ++current_line_for_proccess)
-               {
-                    MPI_Send(
-                        image -> image_matrix[current_line_for_proccess], 
-                        image -> width, 
-                        MPI_UNSIUGNED_CHAR, 
-                        slave_index, 
-                        UNPROCESSED_MATRIX, 
-                        MPI_COMM_WORLD
-                    );
-               }
-
-               start += send_size;
-               finish += send_size;
-           }
-
-            // send the rest to the last neighbour
-            for (current_line_to_process = start; current_line_for_proccess < image -> height; ++current_line_for_proccess)
-            {
-                MPI_Send(
-                    image -> image_matrix[current_line_for_proccess], 
-                    image -> width, 
-                    MPI_UNSIUGNED_CHAR, 
-                    number_of_processes - 1, 
-                    UNPROCESSED_MATRIX, 
-                    MPI_COMM_WORLD
-                );
-            }
-
             /**
-             *  Create a new matrix which will hold all processed lines
-             *  received from slaves.
-             * 
-             **/ 
-            unsigned char **matrix_copy = (unsigned char **) 
-                                          malloc (image -> height * 
-                                          sizeof(unsigned char *));
-
-            for (line = 0; line < image -> height; ++line)
-            {
-                matrix_copy[line] = (unsigned char *) 
-                                    malloc(image -> width *
-                                    sizeof(unsigned char));
-            }
-            
-            unsigned char **recv_matrix = (unsigned char **) 
-                                          malloc ((send_size + 2) * 
-                                          sizeof(unsigned char *));
-
-            for (line = 0; line < (send_size + 2); ++line)
-            {
-                recv_matrix[line] = (unsigned char *) 
-                                    malloc(image -> width *
-                                    sizeof(unsigned char));
-            }
-
-            int current_line = 0;
-
-            for (slave_index = 1; slave_index < number_of_processes - 1; ++slave_index)
-            {
-                /**
-                 * Receive submatrix
-                 * - and get only the core of ir between 1 -> send_size + 1
-                 **/ 
-                for (line = 0; line < send_size + 2; ++line) 
-                {
-                    MPI_Recv(
-                        recv_matrix[line], 
-                        image -> width, 
-                        MPI_UNSIGNED_CHAR, 
-                        slave_index, 
-                        MPI_ANY_TAG, 
-                        MPI_COMM_WORLD, 
-                        status
-                    );
-                }
-
-                for (line = 1; line < send_size - 1; ++line) 
-                {
-                    current_line++;
-
-                    for (column = 0; column < image -> width; ++column) 
-                    {
-                        matrix_copy[current_line][column] = recv_matrix[line][column];
-                    }
-                }
-                
-            }
-            
-            /**
-             * Receive submatrix from the last neighbour
-             * 
+             *  Process PGM Image: P5
              **/ 
 
-            for (line = 0; line < send_size + 2; ++line) 
-            {
-                MPI_Recv(
-                    recv_matrix[line], 
-                    image -> width, 
-                    MPI_UNSIGNED_CHAR, 
-                    number_of_processes - 1, 
-                    MPI_ANY_TAG, 
-                    MPI_COMM_WORLD, 
-                    status
-                );
-            }
-
-            for (line = 1; line < send_size - 1; ++line) 
-            {
-                current_line++;
-                
-                for (column = 0; column < image -> width; ++column) 
-                {
-                    matrix_copy[current_line][column] = recv_matrix[line][column];
-                }
-            }
-
-            image -> image_matrix = matrix_copy;
-            write_image(image, NULL, out_file_name);
-
-            printf("%s\n", MASTER_PROCESS_FINISHED);
-        } 
+            process_PGM_image_master(input_image_file_name);
+        }
         else
-        {  
-
-
-        }
-    }
-    else 
-    {
-        /**
-         *  Slave process
-         **/ 
-
-        int line;
-        int column;
-        int received_width;
-        int start_line_process;
-        int finish_line_process;
-
-        while(1)
         {
-            MPI_Recv(
-                &received_width, 
-                1, 
-                MPI_INT, 
-                MASTER, 
-                MPI_ANY_TAG, 
-                MPI_COMM_WORLD, 
-                &status
-            );
-
-            MPI_Recv(
-                &start_line_process, 
-                1, 
-                MPI_INT, 
-                MASTER, 
-                MPI_ANY_TAG, 
-                MPI_COMM_WORLD, 
-                &status
-            );
-
-            MPI_Recv(
-                &finish_line_process, 
-                1, 
-                MPI_INT, 
-                MASTER, 
-                MPI_ANY_TAG, 
-                MPI_COMM_WORLD, 
-                &status
-            );
-
             /**
-             *  Receive input lines in a matrix
+             *  Process PNM Image: P6
              **/ 
 
-            unsigned char **input_data = (unsigned char **) 
-                                        malloc ((finish_line_process - start_line_process) * 
-                                        sizeof(unsigned char *));
-
-            for (line = 0; line < (finish_line_process - start_line_process); ++line)
-            {
-                input_data[line] = (unsigned char *) 
-                                    malloc(received_width *
-                                    sizeof(unsigned char));
-            }
-
-
-            int received_line_to_process;
-
-            for (received_line_to_process = start_line_process; 
-                received_line_to_process < finish_line_process; 
-                ++received_line_to_process)
-            {
-                MPI_Recv(
-                    input_data[received_line_to_process], 
-                    received_width, 
-                    MPI_UNSIGNED_CHAR, 
-                    MASTER, 
-                    MPI_ANY_TAG, 
-                    MPI_COMM_WORLD, 
-                    &status
-                );
-            }
-
-            /**
-             *  Apply the filter:
-             *  - Every subprocess or slave will know about the current filter
-             *    and will apply it
-             **/ 
-            
-            unsigned char **output_data = (unsigned char **) 
-                                        malloc ((finish_line_process - start_line_process) * 
-                                        sizeof(unsigned char *));
-
-            for (line = 0; line < (finish_line_process - start_line_process); ++line)
-            {
-                output_data[line] = (unsigned char *) 
-                                    malloc(received_width *
-                                    sizeof(unsigned char));
-            }
-
-            
-
-
+            process_PNM_image(input_image_file_name);
         }
+  } 
+  else
+  {
+
+      /**
+       *  Slave process
+       **/ 
+      type = image_type(input_image_file_name);
+      
+      if (type == PGM_TYPE)
+      {
+          /**
+           *  Process PGM Image: P5
+           **/ 
+
+          process_PGM_image_slave(input_image_file_name);
+      }
+      else
+      {
+          /**
+           *  Process PNM Image: P6
+           **/ 
+
+          process_PNM_image(input_image_file_name);
+      }
+
+       
+  }
+  
+  MPI_Finalize();
+  return 0;
+}
+
+
+/**
+ * @param: input_image_file_name
+ * 
+ * Function that process the input and handle the whole process of receiving and 
+ * sending data only for PGM as master process. Altough it seems duplicated code I 
+ * prefer to use separate funstions for processing different type of images as this poject 
+ * can be in such a way extended in a certain moment in time.
+ **/ 
+
+void process_PGM_image_master(char *input_image_file_name,
+                       char *output_image_file_name,
+                       char *argv[],
+                       int argc, 
+                       int number_of_processes)
+{
+    PGMImage *image = read_PGM_image(input_image_file_name);
+
+    int start_line, end_line;
+    int slave_index;
+
+    /**
+     * Scatter the image across all the slave processes
+     **/ 
+
+    for (slave_index = 1; slave_index < number_of_processes; ++slave_index) 
+    {
+      start_line = (slave_index * image -> height) / number_of_processes;
+      end_line = ((slave_index + 1) * image -> height) / number_of_processes;
+
+     
+      start_line -= 1;
+      if (slave_index != number_of_processes - 1)
+        end_line++;
+
+      send_image_PGM(
+          image, 
+          slave_index, 
+          start_line, 
+          end_line
+        );
     }
-    }
+
+    /**
+     *  The first part of the image will the resposability of the 
+     *  master process.
+     **/ 
+
+    start_line = 0;
+    end_line = image -> height / number_of_processes;
+
+    /**
+     *  Take one line further to ensure that the distribution 
+     *  is made according the rule send_size + kernel_radius - 1
+     **/ 
+
+    if (end_line != image -> height)
+      end_line++;
     
-    MPI_Finalize(); 
-    return 0;
+    int filter_index;
+
+    for (filter_index = 3; filter_index < argc; ++filter_index) 
+    {
+      char *current_filter = argv[filter_index];
+      apply_filter(
+          image, 
+          current_filter, 
+          start_line, 
+          end_line
+        );
+
+      if (number_of_processes > 1) 
+      {
+        int primary_slave_index = 1;
+
+        /**
+         *  Send computed edge line to next process
+         **/ 
+        MPI_Send(
+            image -> image_matrix[end_line - 2],
+            image -> width,
+            MPI_UNSIGNED_CHAR,
+            primary_slave_index,
+            DEFAULT_TAG,
+            MPI_COMM_WORLD
+        );
+
+        /**
+         *  Receive computed edge line from next process
+         **/
+
+        MPI_Recv(
+            image -> image_matrix[end_line - 1],
+            image -> width,
+            MPI_UNSIGNED_CHAR,
+            primary_slave_index,
+            DEFAULT_TAG,
+            MPI_COMM_WORLD,
+            MPI_STATUS_IGNORE);
+      }
+    }
+
+    /**
+     *  Receive data from all processes and reconstruct image
+     **/
+
+    for (slave_index = 1; slave_index < number_of_processes; ++slave_index) 
+    {
+      start_line = (slave_index * image -> height) / number_of_processes;
+      end_line = ((slave_index + 1) * image -> height) / number_of_processes;
+
+      PGMImage *computed_image = receive_image_PGM(slave_index);
+
+      for (line = start_line; line < end_line; ++line) 
+      {
+        image -> image_matrix[line] = computed_image -> image_matrix[line - start_line + 1];
+      }
+
+    }
+
+    write_image(image, NULL, output_image_file_name);
+  
+}
+
+/**
+ * @param: input_image_file_name
+ * Function that process the input and handle the whole process of receiving and 
+ * sending data only for PNM.
+ * 
+ **/ 
+void process_PNM_image(char *input_image_file_name, char *argv[])
+{
+    
+}
+void process_PGM_image_slave( char *input_image_file_name,
+                              char *output_image_file_name,
+                              char *argv[],
+                              int argc, 
+                              int rank,
+                              int number_of_processes)
+{
+
+    PGMImage *image = receive_image_PGM(MASTER);
+
+
+    /**
+     *  Apply filters.
+     *  *****Updating the upper and lower edges each time if they exist
+     **/
+    int filter_index;
+    for (filter_index = 3; filter_index < argc; ++filter_index) 
+    {
+      apply_filter(image, get_filter_by_name(argv[filter_index]), 0, image -> height);
+
+      MPI_Recv(image -> image_matrix[0],
+              image -> width,
+              MPI_UNSIGNED_CHAR,
+              rank - 1,
+              DEFAULT_TAG,
+              MPI_COMM_WORLD,
+              MPI_STATUS_IGNORE);
+
+      MPI_Send(image -> image_matrix[1],
+              image -> width,
+              MPI_UNSIGNED_CHAR,
+              rank - 1,
+              DEFAULT_TAG,
+              MPI_COMM_WORLD);
+
+      if (rank != number_of_processes - 1) 
+      {
+          MPI_Send(image -> image_matrix[image -> height - 2],
+                  image -> width,
+                  MPI_UNSIGNED_CHAR,
+                  rank + 1,
+                  DEFAULT_TAG,
+                  MPI_COMM_WORLD);
+
+          MPI_Recv(image -> image_matrix[image->height - 1],
+                  image -> width,
+                  MPI_UNSIGNED_CHAR,
+                  rank + 1,
+                  DEFAULT_TAG,
+                  MPI_COMM_WORLD,
+                  MPI_STATUS_IGNORE);
+    }
+}
+
+/**
+ *  Send a PGM Image to a fixed destination.
+ * 
+ * 
+ **/ 
+void send_image_PGM(PGMImage *image, int destination, int start_line, int end_line)
+{
+  
 }
