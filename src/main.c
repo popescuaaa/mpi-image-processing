@@ -34,22 +34,22 @@ void process_PGM_image_slave(char *input_image_file_name,
                        char *output_image_file_name,
                        char *argv[],
                        int argc, 
+                       int rank,
                        int number_of_processes);
 
-void process_PNM_image(char *input_image_file_name, char *argv[]);
 void send_image_PGM(PGMImage *image, int destination, int start_line, int end_line);
-void send_image_PNM(PNMImage *image, int destination, int start_line, int end_line);
+
 PGMImage *receive_image_PGM(int source);
-PNMImage *receive_image_PNM(int source);
-void apply_filter(PGMImage *image, float **filter, int start_line, int end_line);
+
+void apply_filter(PGMImage *image, const float **filter, int start_line, int end_line);
 
 int main(int argc, char *argv[]) 
 {
   int type;  
   int rank;
   int number_of_processes;
-  char input_image_file_name[100];
-  char output_image_file_name[100];
+  char *input_image_file_name;
+  char *output_image_file_name;
 
   MPI_Init(&argc, &argv);
   MPI_Comm_rank(MPI_COMM_WORLD, &rank);
@@ -71,7 +71,7 @@ int main(int argc, char *argv[])
 
         input_image_file_name = argv[1];
         output_image_file_name = argv[2];
-        type = image_type(input_image_file_name);
+        type = PGM_TYPE;
         
         if (type == PGM_TYPE)
         {
@@ -79,7 +79,11 @@ int main(int argc, char *argv[])
              *  Process PGM Image: P5
              **/ 
 
-            process_PGM_image_master(input_image_file_name);
+            process_PGM_image_master(input_image_file_name,
+                                    output_image_file_name,
+                                    argv,
+                                    argc,
+                                    number_of_processes);
         }
         else
         {
@@ -87,7 +91,7 @@ int main(int argc, char *argv[])
              *  Process PNM Image: P6
              **/ 
 
-            process_PNM_image(input_image_file_name);
+            
         }
   } 
   else
@@ -96,7 +100,7 @@ int main(int argc, char *argv[])
       /**
        *  Slave process
        **/ 
-      type = image_type(input_image_file_name);
+      type = PGM_TYPE;
       
       if (type == PGM_TYPE)
       {
@@ -104,7 +108,12 @@ int main(int argc, char *argv[])
            *  Process PGM Image: P5
            **/ 
 
-          process_PGM_image_slave(input_image_file_name);
+          process_PGM_image_slave(input_image_file_name,
+          output_image_file_name,
+          argv,
+          argc, 
+          rank,
+          number_of_processes);
       }
       else
       {
@@ -112,7 +121,7 @@ int main(int argc, char *argv[])
            *  Process PNM Image: P6
            **/ 
 
-          process_PNM_image(input_image_file_name);
+        
       }
 
        
@@ -234,7 +243,7 @@ void process_PGM_image_master(char *input_image_file_name,
       end_line = ((slave_index + 1) * image -> height) / number_of_processes;
 
       PGMImage *computed_image = receive_image_PGM(slave_index);
-
+      int line;
       for (line = start_line; line < end_line; ++line) 
       {
         image -> image_matrix[line] = computed_image -> image_matrix[line - start_line + 1];
@@ -315,6 +324,7 @@ void process_PGM_image_slave( char *input_image_file_name,
                   MPI_STATUS_IGNORE);
     }
 }
+}
 
 /**
  *  Send a PGM Image to a fixed destination.
@@ -344,7 +354,7 @@ void send_image_PGM(PGMImage *image, int destination, int start_line, int end_li
   int _height = end_line - start_line;
 
   MPI_Send(
-    &new_height, 
+    &_height, 
     1, 
     MPI_INT, 
     destination, 
@@ -363,7 +373,7 @@ void send_image_PGM(PGMImage *image, int destination, int start_line, int end_li
 
   int line;
   for (line = start_line; line < end_line; ++line) {
-    MPI_Send(image -> image[line],
+    MPI_Send(image -> image_matrix[line],
              image -> width,
              MPI_UNSIGNED_CHAR,
              destination,
@@ -416,7 +426,7 @@ PGMImage *receive_image_PGM(int source)
     &(image -> max_val),
       1,
       MPI_INT,
-      sender,
+      source,
       DEFAULT_TAG,
       MPI_COMM_WORLD,
       MPI_STATUS_IGNORE
@@ -440,9 +450,9 @@ PGMImage *receive_image_PGM(int source)
 }
 
 
-void apply_filter(PGMImage *image, float** filter, int start_line, int end_line) 
+void apply_filter(PGMImage *image, const float **filter, int start_line, int end_line) 
 {
-  PGMImage result = image;
+  PGMImage *result = image;
 
   int line;
   int column;
@@ -483,21 +493,28 @@ void apply_filter(PGMImage *image, float** filter, int start_line, int end_line)
               }
             };
         
-        float result = 0;
+        float r = 0;
         for (int i = 0; i < 3; i++)
           {
             for (int j = 0; j < 3; j++)
               {
-                  result += pixels[i][j] * filter[i][j];
+                  r += pixels[i][j] * filter[i][j];
               }
           }
           
-        result -> image_matrix[line][column] = (unsigned char) result;
+        result -> image_matrix[line][column] = (unsigned char) r;
       }
     }
   }
 
   for (int i = 0; i < image -> height; i++)
-    for (int j = 0; j < image -> width; j++)
-      image -> image_matrix[i][j] = result -> image_matrix[i][j];
+  {
+     for (int j = 0; j < image -> width; j++)
+     {
+       image -> image_matrix[i][j] = result -> image_matrix[i][j];
+     }
+      
+  }
+   
+
 }

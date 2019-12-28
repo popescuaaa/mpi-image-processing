@@ -31,6 +31,6 @@
 #define UNPROCESSED_MATRIX 0
 #define PROCESSED_MATRIX 1
 #define MASTER_PROCESS_FINISHED "The master process finished the matrix computation"
-
+#define DEFAULT_TAG 0
 #endif
 

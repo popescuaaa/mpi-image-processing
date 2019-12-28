@@ -39,7 +39,7 @@ const float embross[FILTER_HEIGHT][FILTER_WIDTH] =
     { 0.0, -1.0, 0.0}
 };
 
-const float default[FILTER_HEIGHT][FILTER_WIDTH] = 
+const float default_filter[FILTER_HEIGHT][FILTER_WIDTH] = 
 {
     { 0.0, 0.0, 0.0},
     { 0.0, 1.0, 0.0},
@@ -47,7 +47,7 @@ const float default[FILTER_HEIGHT][FILTER_WIDTH] =
 };
 
 
-const float **get_filter_by_name(char name[]) 
+const float **get_filter_by_name(char *name) 
 {
   if (strcmp(name, "smooth") == 0)
   {
@@ -77,7 +77,7 @@ const float **get_filter_by_name(char name[])
   /**
    *  Handle non-valid filter names
    **/ 
-  return default;
+  return default_filter;
 }
 
 #endif
